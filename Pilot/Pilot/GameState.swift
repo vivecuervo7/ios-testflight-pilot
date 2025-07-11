@@ -1,6 +1,5 @@
 import Foundation
 
-
 enum GameState {
     case setup
     case playing
