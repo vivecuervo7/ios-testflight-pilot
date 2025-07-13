@@ -3,10 +3,12 @@ import SwiftUI
 struct ContentView: View {
     @State private var scoreboard = Scoreboard()
     @State private var startingPoints = 0
+    
+    var appName = Bundle.main.object(forInfoDictionaryKey: "APP_TITLE") as! String
 
     var body: some View {
         VStack(alignment: .leading) {
-            Text("Score Keeper")
+            Text(appName)
                 .font(.title)
                 .bold()
                 .padding(.bottom)
