@@ -24,7 +24,6 @@ runs:
         echo "Importing distribution certificate with private key..."
         echo "${{ inputs.certificate-base64 }}" | base64 --decode > distribution.p12
         security import distribution.p12 -k "${{ inputs.keychain-name }}" -P "${{ inputs.certificate-password }}" -T /usr/bin/codesign
-        rm -f distribution.p12
 
         # Set key partition list for codesign access
         security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ inputs.keychain-password }}" "${{ inputs.keychain-name }}"
@@ -32,3 +31,9 @@ runs:
         # Verify certificate import
         echo "Certificates installed successfully"
         security find-identity -v -p codesigning "${{ inputs.keychain-name }}"
+
+    - name: Cleanup certificate files
+      if: always()
+      shell: bash
+      run: |
+        rm -f distribution.p12
