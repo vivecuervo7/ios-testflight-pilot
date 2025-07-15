@@ -41,11 +41,22 @@ jobs:
 
           if [ "$HTTP_STATUS" -eq 200 ]; then
             echo "✅ App Store Connect API test successful!"
-            echo "Raw API response:"
-            cat /tmp/api_response.json
+            echo "📱 Found certificates:"
+            
+            # Parse and display certificates
+            cat /tmp/api_response.json | grep -A 3 '"certificateType"' | while read -r line; do
+              if [[ $line == *'"certificateType"'* ]]; then
+                TYPE=$(echo $line | sed 's/.*"certificateType" : "\([^"]*\)".*/\1/')
+                echo "  • $TYPE Certificate"
+              elif [[ $line == *'"expirationDate"'* ]]; then
+                DATE=$(echo $line | sed 's/.*"expirationDate" : "\([^"]*\)".*/\1/')
+                echo "    Expires: $DATE"
+              fi
+            done
+            
             echo ""
-            echo "Certificate count:"
-            cat /tmp/api_response.json | grep -o '"data":\[[^]]*\]' | wc -c
+            echo "🔑 JWT Authentication: ✅ Working"
+            echo "🏢 API Access: ✅ Verified"
           elif [ "$HTTP_STATUS" -eq 401 ]; then
             echo "❌ Authentication failed (HTTP 401)"
             echo "Check your API credentials"
