@@ -31,18 +31,19 @@ jobs:
         run: |
           echo "Testing App Store Connect API with generated JWT token..."
 
-          # Test the API by listing apps (requires minimal permissions)
+          # Test the API by listing certificates (Developer role has access)
           HTTP_STATUS=$(curl -s -o /tmp/api_response.json -w "%{http_code}" \
             -H "Authorization: Bearer ${{ steps.jwt.outputs.jwt-token }}" \
             -H "Content-Type: application/json" \
-            "https://api.appstoreconnect.apple.com/v1/apps?limit=5")
+            "https://api.appstoreconnect.apple.com/v1/certificates?limit=10")
 
           echo "API Response Status: $HTTP_STATUS"
 
           if [ "$HTTP_STATUS" -eq 200 ]; then
             echo "✅ App Store Connect API test successful!"
-            echo "Found apps:"
-            cat /tmp/api_response.json | grep -o '"name":"[^"]*"' | head -5 || echo "No app names found in response"
+            echo "Found certificates:"
+            cat /tmp/api_response.json | grep -o '"name":"[^"]*"' | head -5 || echo "Checking certificate types instead..."
+            cat /tmp/api_response.json | grep -o '"certificateType":"[^"]*"' | head -5 || echo "No certificate info found in response"
           elif [ "$HTTP_STATUS" -eq 401 ]; then
             echo "❌ Authentication failed (HTTP 401)"
             echo "Check your API credentials"
