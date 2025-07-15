@@ -41,9 +41,11 @@ jobs:
 
           if [ "$HTTP_STATUS" -eq 200 ]; then
             echo "✅ App Store Connect API test successful!"
-            echo "Found certificates:"
-            cat /tmp/api_response.json | grep -o '"name":"[^"]*"' | head -5 || echo "Checking certificate types instead..."
-            cat /tmp/api_response.json | grep -o '"certificateType":"[^"]*"' | head -5 || echo "No certificate info found in response"
+            echo "Raw API response:"
+            cat /tmp/api_response.json
+            echo ""
+            echo "Certificate count:"
+            cat /tmp/api_response.json | grep -o '"data":\[[^]]*\]' | wc -c
           elif [ "$HTTP_STATUS" -eq 401 ]; then
             echo "❌ Authentication failed (HTTP 401)"
             echo "Check your API credentials"
