@@ -22,11 +22,12 @@ jobs:
         id: jwt
         uses: ./.github/actions/generate-appstore-jwt
         with:
-          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
-          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+          api-key-id: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          api-private-key: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
 
       - name: Test App Store Connect API
+        if: success()
         run: |
           echo "Testing App Store Connect API with generated JWT token..."
 
