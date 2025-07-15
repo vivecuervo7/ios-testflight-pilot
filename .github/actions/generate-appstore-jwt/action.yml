@@ -24,7 +24,7 @@ runs:
 
     - name: Install JWT library
       shell: bash
-      run: npm install -g jsonwebtoken
+      run: npm install jsonwebtoken
 
     - name: Generate JWT token
       id: generate-jwt
@@ -34,7 +34,7 @@ runs:
         ISSUER_ID: ${{ inputs.issuer-id }}
         PRIVATE_KEY: ${{ inputs.api-private-key }}
       run: |
-        echo "jwt-token=$(node -e "
+        echo "jwt-token=$(NODE_PATH=./node_modules node -e "
           const jwt = require('jsonwebtoken');
           
           const keyId = process.env.KEY_ID;
