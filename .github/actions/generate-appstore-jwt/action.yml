@@ -1,0 +1,58 @@
+inputs:
+  api-key-id:
+    description: "App Store Connect API Key ID"
+    required: true
+  issuer-id:
+    description: "App Store Connect API Issuer ID"
+    required: true
+  api-private-key:
+    description: "App Store Connect API Private Key (.p8 file content)"
+    required: true
+
+outputs:
+  jwt-token:
+    description: "Generated JWT token for App Store Connect API"
+    value: ${{ steps.generate-jwt.outputs.jwt-token }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+
+    - name: Install JWT library
+      shell: bash
+      run: npm install -g jsonwebtoken
+
+    - name: Generate JWT token
+      id: generate-jwt
+      shell: bash
+      env:
+        KEY_ID: ${{ inputs.api-key-id }}
+        ISSUER_ID: ${{ inputs.issuer-id }}
+        PRIVATE_KEY: ${{ inputs.api-private-key }}
+      run: |
+        echo "jwt-token=$(node -e "
+          const jwt = require('jsonwebtoken');
+          
+          const keyId = process.env.KEY_ID;
+          const issuerId = process.env.ISSUER_ID;
+          const privateKey = process.env.PRIVATE_KEY;
+          
+          const now = Math.floor(Date.now() / 1000);
+          const payload = {
+            iss: issuerId,
+            iat: now,
+            exp: now + 300,
+            aud: 'appstoreconnect-v1'
+          };
+          
+          const token = jwt.sign(payload, privateKey, {
+            algorithm: 'ES256',
+            keyid: keyId
+          });
+          
+          console.log(token);
+        ")" >> $GITHUB_OUTPUT

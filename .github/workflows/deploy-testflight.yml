@@ -1,0 +1,70 @@
+name: Deploy to TestFlight
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  XCODE_VERSION: "16.1"
+  IOS_VERSION: "18.0"
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate App Store Connect JWT Token
+        id: jwt
+        uses: ./.github/actions/generate-appstore-jwt
+        with:
+          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+
+      - name: Setup certificates and provisioning
+        # TODO: Import certificates and provisioning profiles
+        run: echo "TODO - Setup Apple certificates and provisioning profiles"
+
+      - name: Build app for testing
+        # TODO: Build the app for running tests
+        run: echo "TODO - Build app for testing using xcodebuild"
+
+      - name: Run tests
+        # TODO: Execute Xcode unit tests
+        run: echo "TODO - Run Xcode tests"
+
+      - name: Build and Archive for TestFlight
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        # TODO: Create archive for App Store distribution
+        run: echo "TODO - Archive app for TestFlight distribution"
+
+      - name: Export IPA
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        # TODO: Export signed IPA from archive
+        run: echo "TODO - Export IPA file from archive"
+
+      - name: Upload to TestFlight
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "Uploading to TestFlight using App Store Connect API..."
+          echo "Using JWT token (5 minute expiry)"
+
+          # TODO: Use the JWT token for TestFlight upload
+          # Example using App Store Connect API directly:
+          # curl -H "Authorization: Bearer ${{ steps.jwt.outputs.jwt-token }}" \
+          #      -H "Content-Type: application/json" \
+          #      https://api.appstoreconnect.apple.com/v1/...
+
+          echo "TODO - Upload IPA to TestFlight using JWT token"
+
+      - name: Cleanup
+        if: always()
+        # TODO: Clean up temporary files, keychains, etc.
+        run: echo "TODO - Clean up temporary files and keychains"
