@@ -3,8 +3,6 @@ name: Deploy to TestFlight
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 env:
@@ -27,6 +25,41 @@ jobs:
           api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
           api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+
+      - name: Test App Store Connect API
+        run: |
+          echo "Testing App Store Connect API with generated JWT token..."
+
+          # Test the API by listing apps (requires minimal permissions)
+          HTTP_STATUS=$(curl -s -o /tmp/api_response.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ steps.jwt.outputs.jwt-token }}" \
+            -H "Content-Type: application/json" \
+            "https://api.appstoreconnect.apple.com/v1/apps?limit=5")
+
+          echo "API Response Status: $HTTP_STATUS"
+
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "✅ App Store Connect API test successful!"
+            echo "Found apps:"
+            cat /tmp/api_response.json | grep -o '"name":"[^"]*"' | head -5 || echo "No app names found in response"
+          elif [ "$HTTP_STATUS" -eq 401 ]; then
+            echo "❌ Authentication failed (HTTP 401)"
+            echo "Check your API credentials"
+            cat /tmp/api_response.json
+            exit 1
+          elif [ "$HTTP_STATUS" -eq 403 ]; then
+            echo "❌ Forbidden (HTTP 403)"
+            echo "Your API key may lack required permissions"
+            cat /tmp/api_response.json
+            exit 1
+          else
+            echo "⚠️ Unexpected response (HTTP $HTTP_STATUS)"
+            cat /tmp/api_response.json
+            exit 1
+          fi
+
+          # Clean up
+          rm -f /tmp/api_response.json
 
       - name: Setup certificates and provisioning
         # TODO: Import certificates and provisioning profiles
