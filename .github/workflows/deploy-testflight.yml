@@ -87,5 +87,10 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
+          # Clean up keychain
           security delete-keychain "${{ steps.keychain.outputs.keychain-name }}" 2>/dev/null || true
           security default-keychain -s login.keychain
+
+          # Clean up provisioning profiles from both possible locations
+          rm -rf ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision 2>/dev/null || true
+          rm -rf ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/*.mobileprovision 2>/dev/null || true
