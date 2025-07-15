@@ -1,0 +1,36 @@
+name: "Setup App Store Connect"
+description: "Generates JWT token and tests App Store Connect API"
+inputs:
+  api-key-id:
+    description: "App Store Connect API Key ID"
+    required: true
+  issuer-id:
+    description: "App Store Connect Issuer ID"
+    required: true
+  api-private-key:
+    description: "App Store Connect API Private Key"
+    required: true
+outputs:
+  jwt-token:
+    description: "Generated JWT token for App Store Connect API"
+    value: ${{ steps.jwt.outputs.jwt-token }}
+runs:
+  using: "composite"
+  steps:
+    - name: Generate App Store Connect JWT Token
+      id: jwt
+      uses: ./.github/actions/generate-appstore-jwt
+      with:
+        api-key-id: ${{ inputs.api-key-id }}
+        issuer-id: ${{ inputs.issuer-id }}
+        api-private-key: ${{ inputs.api-private-key }}
+
+    - name: Test App Store Connect API
+      shell: bash
+      run: |
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+          -H "Authorization: Bearer ${{ steps.jwt.outputs.jwt-token }}" \
+          -H "Content-Type: application/json" \
+          "https://api.appstoreconnect.apple.com/v1/certificates?limit=1")
+
+        [ "$HTTP_STATUS" -eq 200 ] && echo "App Store Connect API test successful!" || exit 1

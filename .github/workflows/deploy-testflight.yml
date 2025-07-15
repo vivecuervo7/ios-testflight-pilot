@@ -10,9 +10,12 @@ env:
   IOS_VERSION: "18.0"
 
 jobs:
-  build-and-test:
+  deploy:
     runs-on: macos-latest
     timeout-minutes: 30
+    strategy:
+      matrix:
+        environment: [dev, staging, prod]
 
     steps:
       - name: Checkout code
@@ -38,7 +41,7 @@ jobs:
       - name: Create keychain
         id: keychain
         run: |
-          KEYCHAIN_NAME="build-${{ github.run_id }}.keychain"
+          KEYCHAIN_NAME="build-${{ github.run_id }}-${{ matrix.environment }}.keychain"
           echo "keychain-name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
 
           echo "Creating temporary keychain: $KEYCHAIN_NAME"
@@ -55,7 +58,31 @@ jobs:
           certificate-base64: ${{ secrets.DISTRIBUTION_CERTIFICATE_BASE64 }}
           certificate-password: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
 
-      # TODO: Add provisioning profile setup, build, and deploy steps here
+      - name: Setup Dev provisioning profile
+        if: matrix.environment == 'dev'
+        uses: ./.github/actions/setup-ios-provisioning-profile
+        with:
+          keychain-name: ${{ steps.keychain.outputs.keychain-name }}
+          provisioning-profile-base64: ${{ secrets.PROVISIONING_PROFILE_DEV_BASE64 }}
+          profile-name: "Dev provisioning profile"
+
+      - name: Setup Staging provisioning profile
+        if: matrix.environment == 'staging'
+        uses: ./.github/actions/setup-ios-provisioning-profile
+        with:
+          keychain-name: ${{ steps.keychain.outputs.keychain-name }}
+          provisioning-profile-base64: ${{ secrets.PROVISIONING_PROFILE_STAGING_BASE64 }}
+          profile-name: "Staging provisioning profile"
+
+      - name: Setup Prod provisioning profile
+        if: matrix.environment == 'prod'
+        uses: ./.github/actions/setup-ios-provisioning-profile
+        with:
+          keychain-name: ${{ steps.keychain.outputs.keychain-name }}
+          provisioning-profile-base64: ${{ secrets.PROVISIONING_PROFILE_PROD_BASE64 }}
+          profile-name: "Prod provisioning profile"
+
+      # TODO: Add build and deploy steps here
 
       - name: Cleanup
         if: always()

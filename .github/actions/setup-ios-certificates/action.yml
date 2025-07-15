@@ -1,5 +1,3 @@
-name: "Setup iOS Certificates"
-description: "Installs iOS distribution certificates into an existing keychain"
 inputs:
   keychain-name:
     description: "Name of the keychain to install certificates into"
