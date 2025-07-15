@@ -1,0 +1,36 @@
+name: "Setup iOS Certificates"
+description: "Installs iOS distribution certificates into an existing keychain"
+inputs:
+  keychain-name:
+    description: "Name of the keychain to install certificates into"
+    required: true
+  keychain-password:
+    description: "Password for the keychain"
+    required: true
+  certificate-base64:
+    description: "Base64 encoded P12 distribution certificate"
+    required: true
+  certificate-password:
+    description: "Password for the P12 certificate"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install certificates
+      shell: bash
+      run: |
+        echo "Installing Apple certificates into keychain: ${{ inputs.keychain-name }}"
+
+        # Import distribution certificate with private key
+        echo "Importing distribution certificate with private key..."
+        echo "${{ inputs.certificate-base64 }}" | base64 --decode > distribution.p12
+        security import distribution.p12 -k "${{ inputs.keychain-name }}" -P "${{ inputs.certificate-password }}" -T /usr/bin/codesign
+        rm -f distribution.p12
+
+        # Set key partition list for codesign access
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ inputs.keychain-password }}" "${{ inputs.keychain-name }}"
+
+        # Verify certificate import
+        echo "Certificates installed successfully"
+        security find-identity -v -p codesigning "${{ inputs.keychain-name }}"

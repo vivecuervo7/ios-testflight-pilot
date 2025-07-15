@@ -93,7 +93,9 @@ fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
 
+# Make sure we don't accidentally commit any certificates etc.
 **/*.cer
 **/*.certSigningRequest
 **/*.mobileProvision
-
+**/*.p8
+**/*.p12
