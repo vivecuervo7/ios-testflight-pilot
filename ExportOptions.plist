@@ -14,19 +14,18 @@
         <string>manual</string>
         <key>provisioningProfiles</key>
         <dict>
-            <!-- Replace with your actual bundle identifier and provisioning profile name -->
-            <key>com.yourcompany.pilot.dev</key>
+            <key>com.isaacdedini.pilot.dev</key>
             <string>iOS_TestFlight_Pilot_Dev</string>
-            <key>com.yourcompany.pilot.staging</key>
+            <key>com.isaacdedini.pilot.staging</key>
             <string>iOS_TestFlight_Pilot_Staging</string>
-            <key>com.yourcompany.pilot.prod</key>
+            <key>com.isaacdedini.pilot.prod</key>
             <string>iOS_TestFlight_Pilot_Prod</string>
         </dict>
         <key>signingCertificate</key>
         <string>Apple Distribution</string>
         <key>teamID</key>
-        <string>YOUR_TEAM_ID</string>
+        <string>CH6SJWRT2C</string>
         <key>destination</key>
-        <string>upload</string>
+        <string>export</string>
     </dict>
 </plist>

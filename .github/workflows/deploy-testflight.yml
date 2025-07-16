@@ -112,7 +112,15 @@ jobs:
             CODE_SIGN_IDENTITY="iPhone Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="Dev provisioning profile"
 
-      # TODO: Add TestFlight upload step later
+      - name: Export IPA for Dev
+        if: matrix.environment == 'dev'
+        run: |
+          cd Pilot
+          xcodebuild -exportArchive \
+            -archivePath "build/Pilot-Dev.xcarchive" \
+            -exportPath "build/" \
+            -exportOptionsPlist ../ExportOptions.plist
+
       # TODO: Add build steps for staging and prod
 
       - name: Cleanup
