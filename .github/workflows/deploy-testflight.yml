@@ -8,6 +8,7 @@ on:
 env:
   XCODE_VERSION: "16.1"
   IOS_VERSION: "18.0"
+  API_PRIVATE_KEYS_DIR: /tmp/private_keys # Recognized by the `xcrun altool` command for uploading the IPA
 
 jobs:
   deploy:
@@ -121,6 +122,25 @@ jobs:
             -exportPath "build/" \
             -exportOptionsPlist ../ExportOptions.plist
 
+      - name: Setup App Store Connect API key
+        run: |
+          # Create the API key file in the expected location
+          mkdir -p $API_PRIVATE_KEYS_DIR
+          echo "${{ secrets.APP_STORE_CONNECT_API_KEY }}" > $API_PRIVATE_KEYS_DIR/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}.p8
+
+      - name: Upload to TestFlight for Dev
+        if: matrix.environment == 'dev'
+        run: |
+          cd Pilot
+
+          # Upload the IPA to TestFlight using altool
+          xcrun altool --upload-package \
+            --type ios \
+            --file "build/Pilot.ipa" \
+            --apiKey "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" \
+            --apiIssuer "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" \
+            --verbose
+
       # TODO: Add build steps for staging and prod
 
       - name: Cleanup
@@ -133,3 +153,6 @@ jobs:
           # Clean up provisioning profiles from both possible locations
           rm -rf ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision 2>/dev/null || true
           rm -rf ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/*.mobileprovision 2>/dev/null || true
+
+          # Clean up App Store Connect API key file
+          rm -rf $API_PRIVATE_KEYS_DIR 2>/dev/null || true
