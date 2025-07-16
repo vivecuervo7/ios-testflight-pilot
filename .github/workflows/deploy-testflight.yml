@@ -110,8 +110,6 @@ jobs:
             -configuration Release \
             -archivePath "build/Pilot-Dev.xcarchive" \
             -destination "generic/platform=iOS" \
-            CODE_SIGN_IDENTITY="iPhone Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="Dev provisioning profile"
 
       - name: Export IPA for Dev
         if: matrix.environment == 'dev'
