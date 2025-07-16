@@ -132,9 +132,9 @@ jobs:
           cd Pilot
 
           # Upload the IPA to TestFlight using altool
-          xcrun altool --upload-package \
+          xcrun altool \
+            --upload-package "build/Pilot.ipa" \
             --type ios \
-            --file "build/Pilot.ipa" \
             --apiKey "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" \
             --apiIssuer "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" \
             --verbose
