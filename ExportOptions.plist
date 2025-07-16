@@ -15,11 +15,11 @@
         <key>provisioningProfiles</key>
         <dict>
             <key>com.isaacdedini.pilot.dev</key>
-            <string>iOS_TestFlight_Pilot_Dev</string>
+            <string>iOS TestFlight Pilot Dev</string>
             <key>com.isaacdedini.pilot.staging</key>
-            <string>iOS_TestFlight_Pilot_Staging</string>
+            <string>iOS TestFlight Pilot Staging</string>
             <key>com.isaacdedini.pilot.prod</key>
-            <string>iOS_TestFlight_Pilot_Prod</string>
+            <string>iOS TestFlight Pilot Prod</string>
         </dict>
         <key>signingCertificate</key>
         <string>Apple Distribution</string>
