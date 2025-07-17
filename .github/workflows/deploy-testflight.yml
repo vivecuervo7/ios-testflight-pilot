@@ -22,23 +22,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Generate App Store Connect JWT Token
-        id: jwt
-        uses: ./.github/actions/generate-appstore-jwt
-        with:
-          api-key-id: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
-          issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          api-private-key: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
-
-      - name: Test App Store Connect API
-        run: |
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "Authorization: Bearer ${{ steps.jwt.outputs.jwt-token }}" \
-            -H "Content-Type: application/json" \
-            "https://api.appstoreconnect.apple.com/v1/certificates?limit=1")
-
-          [ "$HTTP_STATUS" -eq 200 ] && echo "App Store Connect API test successful!" || exit 1
-
       - name: Create keychain
         id: keychain
         run: |
