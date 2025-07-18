@@ -46,12 +46,14 @@ runs:
       run: |
         cd Pilot
         echo "Building archive for ${{ inputs.environment }} environment..."
+        echo "Using build number: ${{ github.run_number }}"
         mkdir -p build
         xcodebuild archive \
           -project Pilot.xcodeproj \
           -scheme "${{ inputs.scheme-name }}" \
           -archivePath "build/Pilot-${{ inputs.environment }}.xcarchive" \
           -destination "generic/platform=iOS" \
+          CURRENT_PROJECT_VERSION=${{ github.run_number }}
 
     - name: Export IPA
       shell: bash
@@ -61,7 +63,8 @@ runs:
         xcodebuild -exportArchive \
           -archivePath "build/Pilot-${{ inputs.environment }}.xcarchive" \
           -exportPath "build/" \
-          -exportOptionsPlist ../ExportOptions.plist
+          -exportOptionsPlist ../ExportOptions.plist \
+          CURRENT_PROJECT_VERSION=${{ github.run_number }}
 
     - name: Setup App Store Connect API key
       shell: bash
