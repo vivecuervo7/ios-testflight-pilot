@@ -2,9 +2,6 @@ name: "Setup iOS Build Environment"
 description: "Setup keychain, certificates, Xcode, and API keys for iOS builds"
 
 inputs:
-  keychain-password:
-    description: "Password for the keychain"
-    required: true
   certificate-base64:
     description: "Base64 encoded distribution certificate"
     required: true
@@ -20,8 +17,8 @@ inputs:
   xcode-version:
     description: "Xcode version to use"
     required: true
-  environment-name:
-    description: "Environment name for keychain naming (test, dev, staging, prod)"
+  environment:
+    description: "Environment name for keychain naming (dev, staging, prod)"
     required: true
 
 outputs:
@@ -32,35 +29,51 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Generate secure keychain password
+      id: keychain-password
+      shell: bash
+      run: |
+        # Generate a random 32-character password for the keychain
+        KEYCHAIN_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32)
+        echo "keychain-password=$KEYCHAIN_PASSWORD" >> $GITHUB_OUTPUT
+
     - name: Create keychain
       id: keychain
       shell: bash
       run: |
-        KEYCHAIN_NAME="build-${{ inputs.environment-name }}-${{ github.run_id }}.keychain"
+        KEYCHAIN_NAME="build-${{ inputs.environment }}-${{ github.run_id }}.keychain"
         echo "keychain-name=$KEYCHAIN_NAME" >> $GITHUB_OUTPUT
 
         echo "Creating temporary keychain: $KEYCHAIN_NAME"
-        security create-keychain -p "${{ inputs.keychain-password }}" "$KEYCHAIN_NAME"
+        security create-keychain -p "${{ steps.keychain-password.outputs.keychain-password }}" "$KEYCHAIN_NAME"
         security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
         security default-keychain -s "$KEYCHAIN_NAME"
-        security unlock-keychain -p "${{ inputs.keychain-password }}" "$KEYCHAIN_NAME"
+        security unlock-keychain -p "${{ steps.keychain-password.outputs.keychain-password }}" "$KEYCHAIN_NAME"
 
-    - name: Setup iOS certificates
-      uses: ./.github/actions/setup-ios-certificates
-      with:
-        keychain-name: ${{ steps.keychain.outputs.keychain-name }}
-        keychain-password: ${{ inputs.keychain-password }}
-        certificate-base64: ${{ inputs.certificate-base64 }}
-        certificate-password: ${{ inputs.certificate-password }}
+    - name: Install certificates
+      shell: bash
+      run: |
+        echo "Installing Apple certificates into keychain: ${{ steps.keychain.outputs.keychain-name }}"
+
+        # Import distribution certificate with private key
+        echo "Importing distribution certificate with private key..."
+        echo "${{ inputs.certificate-base64 }}" | base64 --decode > distribution.p12
+        security import distribution.p12 -k "${{ steps.keychain.outputs.keychain-name }}" -P "${{ inputs.certificate-password }}" -T /usr/bin/codesign
+
+        # Set key partition list for codesign access
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ steps.keychain-password.outputs.keychain-password }}" "${{ steps.keychain.outputs.keychain-name }}"
+
+        # Verify certificate import
+        echo "Certificates installed successfully"
+        security find-identity -v -p codesigning "${{ steps.keychain.outputs.keychain-name }}"
 
     - name: Setup Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: ${{ inputs.xcode-version }}
 
-    - name: Setup App Store Connect API key
+    - name: Cleanup temporary certificate files
+      if: always()
       shell: bash
       run: |
-        # Create the API key file in the expected location
-        mkdir -p ${{ env.API_PRIVATE_KEYS_DIR }}
-        echo "${{ inputs.app-store-connect-api-key }}" > ${{ env.API_PRIVATE_KEYS_DIR }}/AuthKey_${{ inputs.app-store-connect-api-key-id }}.p8
+        rm -f distribution.p12

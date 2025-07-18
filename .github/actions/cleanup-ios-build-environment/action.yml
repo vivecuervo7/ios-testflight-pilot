@@ -1,5 +1,5 @@
 name: "Cleanup iOS Build Environment"
-description: "Clean up keychain, provisioning profiles, and API keys"
+description: "Clean up keychain and provisioning profiles"
 
 inputs:
   keychain-name:
@@ -20,6 +20,3 @@ runs:
         # Clean up provisioning profiles from both possible locations
         rm -rf ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision 2>/dev/null || true
         rm -rf ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/*.mobileprovision 2>/dev/null || true
-
-        # Clean up App Store Connect API key file
-        rm -rf ${{ env.API_PRIVATE_KEYS_DIR }} 2>/dev/null || true

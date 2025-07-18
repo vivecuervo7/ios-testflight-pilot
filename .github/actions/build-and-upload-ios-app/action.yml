@@ -12,6 +12,9 @@ inputs:
     description: "Xcode configuration to use for the build"
     required: true
     default: "Release"
+  app-store-connect-api-key:
+    description: "App Store Connect API Key content"
+    required: true
   app-store-connect-api-key-id:
     description: "App Store Connect API Key ID"
     required: true
@@ -24,19 +27,25 @@ inputs:
   provisioning-profile-base64:
     description: "Base64 encoded provisioning profile for the environment"
     required: true
-  provisioning-profile-name:
-    description: "Name for the provisioning profile (for logging)"
-    required: true
 
 runs:
   using: "composite"
+  env:
+    API_PRIVATE_KEYS_DIR: "/tmp/private_keys"
   steps:
     - name: Setup provisioning profile
-      uses: ./.github/actions/setup-ios-provisioning-profile
-      with:
-        keychain-name: ${{ inputs.keychain-name }}
-        provisioning-profile-base64: ${{ inputs.provisioning-profile-base64 }}
-        profile-name: ${{ inputs.provisioning-profile-name }}
+      shell: bash
+      run: |
+        echo "Installing provisioning profile into keychain: ${{ inputs.keychain-name }}"
+
+        # Decode and install provisioning profile
+        echo "${{ inputs.provisioning-profile-base64 }}" | base64 --decode > profile.mobileprovision
+
+        # Copy to provisioning profiles directory
+        mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+        cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+
+        echo "Provisioning profile installed successfully"
 
     - name: Build archive
       shell: bash
@@ -61,8 +70,17 @@ runs:
           -exportPath "build/" \
           -exportOptionsPlist ../ExportOptions.plist
 
+    - name: Setup App Store Connect API key
+      shell: bash
+      run: |
+        # Create the API key file in the expected location
+        mkdir -p ${{ env.API_PRIVATE_KEYS_DIR }}
+        echo "${{ inputs.app-store-connect-api-key }}" > ${{ env.API_PRIVATE_KEYS_DIR }}/AuthKey_${{ inputs.app-store-connect-api-key-id }}.p8
+
     - name: Upload to TestFlight
       shell: bash
+      env:
+        API_PRIVATE_KEYS_DIR: ${{ env.API_PRIVATE_KEYS_DIR }}
       run: |
         cd Pilot
         echo "Uploading to TestFlight for ${{ inputs.environment }} environment..."
@@ -74,3 +92,11 @@ runs:
           --apiKey "${{ inputs.app-store-connect-api-key-id }}" \
           --apiIssuer "${{ inputs.app-store-connect-issuer-id }}" \
           --verbose
+
+    - name: Cleanup temporary files
+      if: always()
+      shell: bash
+      run: |
+        # Clean up temporary files
+        rm -f profile.mobileprovision
+        rm -rf ${{ env.API_PRIVATE_KEYS_DIR }} 2>/dev/null || true

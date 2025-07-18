@@ -1,0 +1,66 @@
+name: "Deploy iOS App to TestFlight"
+description: "Complete deployment pipeline: setup environment, build, export, and upload to TestFlight"
+
+inputs:
+  environment:
+    description: "Environment to deploy (dev, staging, prod)"
+    required: true
+  scheme-name:
+    description: "Xcode scheme name to build"
+    required: true
+  provisioning-profile-base64:
+    description: "Base64 encoded provisioning profile for this environment"
+    required: true
+  certificate-base64:
+    description: "Base64 encoded distribution certificate"
+    required: true
+  certificate-password:
+    description: "Password for the distribution certificate"
+    required: true
+  app-store-connect-api-key:
+    description: "App Store Connect API Key content"
+    required: true
+  app-store-connect-api-key-id:
+    description: "App Store Connect API Key ID"
+    required: true
+  app-store-connect-issuer-id:
+    description: "App Store Connect Issuer ID"
+    required: true
+  xcode-version:
+    description: "Xcode version to use"
+    required: false
+    default: "16.1"
+  configuration:
+    description: "Xcode configuration to use for the build"
+    required: false
+    default: "Release"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup iOS build environment
+      id: setup
+      uses: ./.github/actions/setup-ios-build-environment
+      with:
+        certificate-base64: ${{ inputs.certificate-base64 }}
+        certificate-password: ${{ inputs.certificate-password }}
+        xcode-version: ${{ inputs.xcode-version }}
+        environment: ${{ inputs.environment }}
+
+    - name: Build and upload to TestFlight
+      uses: ./.github/actions/build-and-upload-ios-app
+      with:
+        environment: ${{ inputs.environment }}
+        scheme-name: ${{ inputs.scheme-name }}
+        configuration: ${{ inputs.configuration }}
+        app-store-connect-api-key: ${{ inputs.app-store-connect-api-key }}
+        app-store-connect-api-key-id: ${{ inputs.app-store-connect-api-key-id }}
+        app-store-connect-issuer-id: ${{ inputs.app-store-connect-issuer-id }}
+        keychain-name: ${{ steps.setup.outputs.keychain-name }}
+        provisioning-profile-base64: ${{ inputs.provisioning-profile-base64 }}
+
+    - name: Cleanup
+      if: always()
+      uses: ./.github/actions/cleanup-ios-build-environment
+      with:
+        keychain-name: ${{ steps.setup.outputs.keychain-name }}
