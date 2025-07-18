@@ -42,7 +42,7 @@ jobs:
         with:
           environment: dev
           scheme-name: "Pilot Dev"
-          provisioning-profile-base64: ${{ secrets.PROVISIONING_PROFILE_DEV_BASE64 }}
+          provisioning-profile-base64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
           certificate-base64: ${{ secrets.DISTRIBUTION_CERTIFICATE_BASE64 }}
           certificate-password: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
           app-store-connect-api-key: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
@@ -63,7 +63,7 @@ jobs:
         with:
           environment: staging
           scheme-name: "Pilot Staging"
-          provisioning-profile-base64: ${{ secrets.PROVISIONING_PROFILE_STAGING_BASE64 }}
+          provisioning-profile-base64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
           certificate-base64: ${{ secrets.DISTRIBUTION_CERTIFICATE_BASE64 }}
           certificate-password: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
           app-store-connect-api-key: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
@@ -84,7 +84,7 @@ jobs:
         with:
           environment: prod
           scheme-name: "Pilot Prod"
-          provisioning-profile-base64: ${{ secrets.PROVISIONING_PROFILE_PROD_BASE64 }}
+          provisioning-profile-base64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
           certificate-base64: ${{ secrets.DISTRIBUTION_CERTIFICATE_BASE64 }}
           certificate-password: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
           app-store-connect-api-key: ${{ secrets.APP_STORE_CONNECT_API_KEY }}

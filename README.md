@@ -70,21 +70,23 @@ The pipeline uses modular composite actions for better maintainability:
 
 ## Required Secrets
 
-Configure these secrets in your GitHub repository:
+Configure these secrets in your GitHub repository and environments:
 
-### Certificates & Provisioning
+### Repository Secrets
+
+Configure these secrets at the repository level:
 
 - `DISTRIBUTION_CERTIFICATE_BASE64`: Base64-encoded P12 distribution certificate
 - `DISTRIBUTION_CERTIFICATE_PASSWORD`: Password for the P12 certificate
-- `PROVISIONING_PROFILE_DEV_BASE64`: Base64-encoded development provisioning profile
-- `PROVISIONING_PROFILE_STAGING_BASE64`: Base64-encoded staging provisioning profile
-- `PROVISIONING_PROFILE_PROD_BASE64`: Base64-encoded production provisioning profile
-
-### App Store Connect API
-
 - `APP_STORE_CONNECT_API_KEY`: Content of the App Store Connect API key (.p8 file)
 - `APP_STORE_CONNECT_API_KEY_ID`: API Key ID from App Store Connect
 - `APP_STORE_CONNECT_ISSUER_ID`: Issuer ID from App Store Connect
+
+### Environment Secrets
+
+Configure these secrets within each GitHub environment (`dev`, `staging`, `prod`):
+
+- `PROVISIONING_PROFILE_BASE64`: Base64-encoded provisioning profile specific to each environment
 
 ## Setup Instructions
 
@@ -115,9 +117,13 @@ Ensure your Xcode project has:
 
 ### 4. GitHub Configuration
 
-1. Add all required secrets to your GitHub repository
-2. Configure GitHub Environments (`dev`, `staging`, `prod`)
-3. Add protection rules for manual approvals on staging/prod environments
+1. **Configure GitHub Environments**: Create three environments (`dev`, `staging`, `prod`) in your repository settings
+2. **Add Repository Secrets**: Configure certificate and App Store Connect API secrets at the repository level
+3. **Add Environment Secrets**: For each environment, add the `PROVISIONING_PROFILE_BASE64` secret with the appropriate Base64-encoded provisioning profile for that environment:
+   - **dev environment**: Add development provisioning profile
+   - **staging environment**: Add staging provisioning profile
+   - **prod environment**: Add production provisioning profile
+4. **Configure Protection Rules**: Add manual approval requirements for staging and prod environments
 
 ## Key Learnings
 
