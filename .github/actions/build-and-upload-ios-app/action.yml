@@ -41,6 +41,27 @@ runs:
 
         echo "Provisioning profile installed successfully"
 
+    - name: Prepare build overrides
+      shell: bash
+      run: |
+        cd Pilot
+        echo "Scanning xcconfig files for variables..."
+
+        # Find variables defined in xcconfig files
+        XCCONFIG_VARS=$(find . -name "*.xcconfig" -exec grep -h "^[A-Z_][A-Z0-9_]*\s*=" {} \; | cut -d= -f1 | tr -d ' ' | sort -u)
+
+        # Build list of environment variable overrides for xcconfig variables only
+        ENV_OVERRIDES=""
+        for var in $XCCONFIG_VARS; do
+          if [ -n "${!var:-}" ]; then
+            ENV_OVERRIDES="$ENV_OVERRIDES $var=\"${!var}\""
+            echo "Overriding $var with environment value: ${!var}"
+          fi
+        done
+
+        # Save overrides for next step
+        echo "ENV_OVERRIDES=$ENV_OVERRIDES" >> $GITHUB_ENV
+
     - name: Build archive
       shell: bash
       run: |
@@ -48,12 +69,14 @@ runs:
         echo "Building archive for ${{ inputs.environment }} environment..."
         echo "Using build number: ${{ github.run_number }}"
         mkdir -p build
-        xcodebuild archive \
+
+        eval "xcodebuild archive \
           -project Pilot.xcodeproj \
-          -scheme "${{ inputs.scheme-name }}" \
-          -archivePath "build/Pilot-${{ inputs.environment }}.xcarchive" \
-          -destination "generic/platform=iOS" \
-          CURRENT_PROJECT_VERSION=${{ github.run_number }}
+          -scheme \"${{ inputs.scheme-name }}\" \
+          -archivePath \"build/Pilot-${{ inputs.environment }}.xcarchive\" \
+          -destination \"generic/platform=iOS\" \
+          CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+          $ENV_OVERRIDES"
 
     - name: Export IPA
       shell: bash
