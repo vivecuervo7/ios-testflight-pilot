@@ -7,6 +7,7 @@ on:
 
 jobs:
   test:
+    name: Run tests
     runs-on: macos-latest
     timeout-minutes: 15
     steps:
@@ -29,6 +30,7 @@ jobs:
             -destination "platform=iOS Simulator,name=iPhone 16" \
 
   deploy-dev:
+    name: Deploy to dev
     runs-on: macos-latest
     timeout-minutes: 30
     needs: test
@@ -50,6 +52,7 @@ jobs:
           app-store-connect-issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
 
   deploy-staging:
+    name: Deploy to staging
     runs-on: macos-latest
     timeout-minutes: 30
     needs: deploy-dev
@@ -71,6 +74,7 @@ jobs:
           app-store-connect-issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
 
   deploy-prod:
+    name: Deploy to production
     runs-on: macos-latest
     timeout-minutes: 30
     needs: deploy-staging
