@@ -8,10 +8,6 @@ inputs:
   scheme-name:
     description: "Xcode scheme name to build"
     required: true
-  configuration:
-    description: "Xcode configuration to use for the build"
-    required: true
-    default: "Release"
   app-store-connect-api-key:
     description: "App Store Connect API Key content"
     required: true
@@ -54,7 +50,6 @@ runs:
         xcodebuild archive \
           -project Pilot.xcodeproj \
           -scheme "${{ inputs.scheme-name }}" \
-          -configuration "${{ inputs.configuration }}" \
           -archivePath "build/Pilot-${{ inputs.environment }}.xcarchive" \
           -destination "generic/platform=iOS" \
 
