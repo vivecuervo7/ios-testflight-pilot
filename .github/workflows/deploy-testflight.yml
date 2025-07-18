@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  XCODE_VERSION: "16.4"
+  XCODE_VERSION: "16.1"
   IOS_VERSION: "18.0"
   API_PRIVATE_KEYS_DIR: /tmp/private_keys # Recognized by the `xcrun altool` command for uploading the IPA
 
