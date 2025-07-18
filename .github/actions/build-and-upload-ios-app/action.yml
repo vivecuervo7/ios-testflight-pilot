@@ -1,0 +1,76 @@
+name: "Build and Upload iOS App"
+description: "Archive, export, and upload iOS app to TestFlight"
+
+inputs:
+  environment:
+    description: "Environment to build for (dev, staging, prod)"
+    required: true
+  scheme-name:
+    description: "Xcode scheme name to build"
+    required: true
+  configuration:
+    description: "Xcode configuration to use for the build"
+    required: true
+    default: "Release"
+  app-store-connect-api-key-id:
+    description: "App Store Connect API Key ID"
+    required: true
+  app-store-connect-issuer-id:
+    description: "App Store Connect Issuer ID"
+    required: true
+  keychain-name:
+    description: "Name of the keychain to use"
+    required: true
+  provisioning-profile-base64:
+    description: "Base64 encoded provisioning profile for the environment"
+    required: true
+  provisioning-profile-name:
+    description: "Name for the provisioning profile (for logging)"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup provisioning profile
+      uses: ./.github/actions/setup-ios-provisioning-profile
+      with:
+        keychain-name: ${{ inputs.keychain-name }}
+        provisioning-profile-base64: ${{ inputs.provisioning-profile-base64 }}
+        profile-name: ${{ inputs.provisioning-profile-name }}
+
+    - name: Build archive
+      shell: bash
+      run: |
+        cd Pilot
+        echo "Building archive for ${{ inputs.environment }} environment..."
+        mkdir -p build
+        xcodebuild archive \
+          -project Pilot.xcodeproj \
+          -scheme "${{ inputs.scheme-name }}" \
+          -configuration "${{ inputs.configuration }}" \
+          -archivePath "build/Pilot-${{ inputs.environment }}.xcarchive" \
+          -destination "generic/platform=iOS" \
+
+    - name: Export IPA
+      shell: bash
+      run: |
+        cd Pilot
+        echo "Exporting IPA for ${{ inputs.environment }} environment..."
+        xcodebuild -exportArchive \
+          -archivePath "build/Pilot-${{ inputs.environment }}.xcarchive" \
+          -exportPath "build/" \
+          -exportOptionsPlist ../ExportOptions.plist
+
+    - name: Upload to TestFlight
+      shell: bash
+      run: |
+        cd Pilot
+        echo "Uploading to TestFlight for ${{ inputs.environment }} environment..."
+
+        # Upload the IPA to TestFlight using altool
+        xcrun altool --upload-app \
+          -f "build/Pilot.ipa" \
+          -t ios \
+          --apiKey "${{ inputs.app-store-connect-api-key-id }}" \
+          --apiIssuer "${{ inputs.app-store-connect-issuer-id }}" \
+          --verbose

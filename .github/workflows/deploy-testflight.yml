@@ -41,65 +41,10 @@ jobs:
           certificate-base64: ${{ secrets.DISTRIBUTION_CERTIFICATE_BASE64 }}
           certificate-password: ${{ secrets.DISTRIBUTION_CERTIFICATE_PASSWORD }}
 
-      - name: Setup Dev provisioning profile
-        if: matrix.environment == 'dev'
-        uses: ./.github/actions/setup-ios-provisioning-profile
-        with:
-          keychain-name: ${{ steps.keychain.outputs.keychain-name }}
-          provisioning-profile-base64: ${{ secrets.PROVISIONING_PROFILE_DEV_BASE64 }}
-          profile-name: "Dev provisioning profile"
-
-      - name: Setup Staging provisioning profile
-        if: matrix.environment == 'staging'
-        uses: ./.github/actions/setup-ios-provisioning-profile
-        with:
-          keychain-name: ${{ steps.keychain.outputs.keychain-name }}
-          provisioning-profile-base64: ${{ secrets.PROVISIONING_PROFILE_STAGING_BASE64 }}
-          profile-name: "Staging provisioning profile"
-
-      - name: Setup Prod provisioning profile
-        if: matrix.environment == 'prod'
-        uses: ./.github/actions/setup-ios-provisioning-profile
-        with:
-          keychain-name: ${{ steps.keychain.outputs.keychain-name }}
-          provisioning-profile-base64: ${{ secrets.PROVISIONING_PROFILE_PROD_BASE64 }}
-          profile-name: "Prod provisioning profile"
-
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
-
-      - name: Run tests for Dev
-        if: matrix.environment == 'dev'
-        run: |
-          cd Pilot
-          xcodebuild test \
-            -project Pilot.xcodeproj \
-            -scheme "Pilot Dev" \
-            -configuration "Debug Dev" \
-            -destination "platform=iOS Simulator,name=iPhone 16" \
-
-      - name: Build archive for Dev
-        if: matrix.environment == 'dev'
-        run: |
-          cd Pilot
-          mkdir -p build
-          xcodebuild archive \
-            -project Pilot.xcodeproj \
-            -scheme "Pilot Dev" \
-            -configuration Release \
-            -archivePath "build/Pilot-Dev.xcarchive" \
-            -destination "generic/platform=iOS" \
-
-      - name: Export IPA for Dev
-        if: matrix.environment == 'dev'
-        run: |
-          cd Pilot
-          xcodebuild -exportArchive \
-            -archivePath "build/Pilot-Dev.xcarchive" \
-            -exportPath "build/" \
-            -exportOptionsPlist ../ExportOptions.plist
 
       - name: Setup App Store Connect API key
         run: |
@@ -107,20 +52,54 @@ jobs:
           mkdir -p $API_PRIVATE_KEYS_DIR
           echo "${{ secrets.APP_STORE_CONNECT_API_KEY }}" > $API_PRIVATE_KEYS_DIR/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}.p8
 
-      - name: Upload to TestFlight for Dev
-        if: matrix.environment == 'dev'
+      - name: Run tests
         run: |
           cd Pilot
+          echo "Running tests before building..."
+          xcodebuild test \
+            -project Pilot.xcodeproj \
+            -scheme "Pilot Dev" \
+            -configuration "Debug Dev" \
+            -destination "platform=iOS Simulator,name=iPhone 16" \
 
-          # Upload the IPA to TestFlight using altool
-          xcrun altool --upload-app \
-            -f "build/Pilot.ipa" \
-            -t ios \
-            --apiKey "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" \
-            --apiIssuer "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" \
-            --verbose
+      - name: Build and upload Dev
+        if: matrix.environment == 'dev'
+        uses: ./.github/actions/build-and-upload-ios-app
+        with:
+          environment: Dev
+          scheme-name: "Pilot Dev"
+          configuration: Release
+          app-store-connect-api-key-id: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          app-store-connect-issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          keychain-name: ${{ steps.keychain.outputs.keychain-name }}
+          provisioning-profile-base64: ${{ secrets.PROVISIONING_PROFILE_DEV_BASE64 }}
+          provisioning-profile-name: "Dev provisioning profile"
 
-      # TODO: Add build steps for staging and prod
+      - name: Build and upload Staging
+        if: matrix.environment == 'staging'
+        uses: ./.github/actions/build-and-upload-ios-app
+        with:
+          environment: Staging
+          scheme-name: "Pilot Staging"
+          configuration: Release
+          app-store-connect-api-key-id: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          app-store-connect-issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          keychain-name: ${{ steps.keychain.outputs.keychain-name }}
+          provisioning-profile-base64: ${{ secrets.PROVISIONING_PROFILE_STAGING_BASE64 }}
+          provisioning-profile-name: "Staging provisioning profile"
+
+      - name: Build and upload Prod
+        if: matrix.environment == 'prod'
+        uses: ./.github/actions/build-and-upload-ios-app
+        with:
+          environment: Prod
+          scheme-name: "Pilot Prod"
+          configuration: Release
+          app-store-connect-api-key-id: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          app-store-connect-issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          keychain-name: ${{ steps.keychain.outputs.keychain-name }}
+          provisioning-profile-base64: ${{ secrets.PROVISIONING_PROFILE_PROD_BASE64 }}
+          provisioning-profile-name: "Prod provisioning profile"
 
       - name: Cleanup
         if: always()
