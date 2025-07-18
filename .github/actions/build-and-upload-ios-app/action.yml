@@ -30,8 +30,6 @@ inputs:
 
 runs:
   using: "composite"
-  env:
-    API_PRIVATE_KEYS_DIR: "/tmp/private_keys"
   steps:
     - name: Setup provisioning profile
       shell: bash
@@ -74,13 +72,13 @@ runs:
       shell: bash
       run: |
         # Create the API key file in the expected location
-        mkdir -p ${{ env.API_PRIVATE_KEYS_DIR }}
-        echo "${{ inputs.app-store-connect-api-key }}" > ${{ env.API_PRIVATE_KEYS_DIR }}/AuthKey_${{ inputs.app-store-connect-api-key-id }}.p8
+        mkdir -p /tmp/private_keys
+        echo "${{ inputs.app-store-connect-api-key }}" > /tmp/private_keys/AuthKey_${{ inputs.app-store-connect-api-key-id }}.p8
 
     - name: Upload to TestFlight
       shell: bash
       env:
-        API_PRIVATE_KEYS_DIR: ${{ env.API_PRIVATE_KEYS_DIR }}
+        API_PRIVATE_KEYS_DIR: /tmp/private_keys
       run: |
         cd Pilot
         echo "Uploading to TestFlight for ${{ inputs.environment }} environment..."
@@ -99,4 +97,4 @@ runs:
       run: |
         # Clean up temporary files
         rm -f profile.mobileprovision
-        rm -rf ${{ env.API_PRIVATE_KEYS_DIR }} 2>/dev/null || true
+        rm -rf /tmp/private_keys 2>/dev/null || true
